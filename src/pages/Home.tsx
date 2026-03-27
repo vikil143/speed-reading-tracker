@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,13 +7,30 @@ import { ChevronLeft, ChevronRight, Lock, Plus, Trash2 } from "lucide-react";
 
 const STORAGE_KEY = "speed-reading-tracker-v1";
 
-function getMonthKey(date = new Date()) {
+type SessionField = "date" | "seconds" | "words" | "notes";
+
+type Session = {
+  id: string;
+  sessionNo: number;
+  date: string;
+  seconds: string;
+  words: string;
+  wpm: string;
+  speedBand: string;
+  notes: string;
+  locked: boolean;
+};
+
+type MonthData = Session[];
+type TrackerData = Record<string, MonthData>;
+
+function getMonthKey(date = new Date()): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
 }
 
-function formatMonthLabel(monthKey) {
+function formatMonthLabel(monthKey: string): string {
   const [year, month] = monthKey.split("-").map(Number);
   return new Date(year, month - 1, 1).toLocaleString("en-US", {
     month: "long",
@@ -21,7 +38,7 @@ function formatMonthLabel(monthKey) {
   });
 }
 
-function createSession(index) {
+function createSession(index: number): Session {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     sessionNo: index + 1,
@@ -35,11 +52,11 @@ function createSession(index) {
   };
 }
 
-function createMonthData() {
+function createMonthData(): MonthData {
   return Array.from({ length: 24 }, (_, i) => createSession(i));
 }
 
-function getClosestBand(wpm) {
+function getClosestBand(wpm: number): string {
   if (!wpm || Number.isNaN(Number(wpm))) return "";
   const bands = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
   let closest = bands[0];
@@ -49,25 +66,37 @@ function getClosestBand(wpm) {
   return String(closest);
 }
 
-function calculateWpm(words, seconds) {
+function calculateWpm(words: string, seconds: string): number | "" {
   const w = Number(words);
   const s = Number(seconds);
   if (!w || !s) return "";
   return Math.round((w * 60) / s);
 }
 
+function isTrackerData(value: unknown): value is TrackerData {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return false;
+  }
+
+  return Object.values(value).every((monthData) => Array.isArray(monthData));
+}
+
 export default function SpeedReadingTrackerApp() {
-  const [data, setData] = useState({});
+  const [data, setData] = useState<TrackerData>({});
   const [currentMonth, setCurrentMonth] = useState(getMonthKey());
 
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      setData(parsed);
-      if (!parsed[getMonthKey()]) {
-        parsed[getMonthKey()] = createMonthData();
+      const parsed: unknown = JSON.parse(raw);
+      if (isTrackerData(parsed)) {
+        const monthKey = getMonthKey();
+        if (!parsed[monthKey]) {
+          parsed[monthKey] = createMonthData();
+        }
         setData({ ...parsed });
+      } else {
+        setData({ [getMonthKey()]: createMonthData() });
       }
     } else {
       setData({ [getMonthKey()]: createMonthData() });
@@ -88,9 +117,9 @@ export default function SpeedReadingTrackerApp() {
     if (!data[currentMonth]) {
       setData((prev) => ({ ...prev, [currentMonth]: createMonthData() }));
     }
-  }, [currentMonth]);
+  }, [currentMonth, data]);
 
-  const updateSession = (id, field, value) => {
+  const updateSession = (id: string, field: SessionField, value: string) => {
     setData((prev) => {
       const sessions = (prev[currentMonth] || []).map((session) => {
         if (session.id !== id || session.locked) return session;
@@ -104,7 +133,7 @@ export default function SpeedReadingTrackerApp() {
     });
   };
 
-  const lockSession = (id) => {
+  const lockSession = (id: string) => {
     setData((prev) => ({
       ...prev,
       [currentMonth]: (prev[currentMonth] || []).map((session) =>
@@ -126,11 +155,13 @@ export default function SpeedReadingTrackerApp() {
   const clearUnlocked = () => {
     setData((prev) => ({
       ...prev,
-      [currentMonth]: (prev[currentMonth] || []).filter((s) => s.locked).map((s, i) => ({ ...s, sessionNo: i + 1 })),
+      [currentMonth]: (prev[currentMonth] || [])
+        .filter((s) => s.locked)
+        .map((s, i) => ({ ...s, sessionNo: i + 1 })),
     }));
   };
 
-  const goMonth = (direction) => {
+  const goMonth = (direction: number) => {
     const [year, month] = currentMonth.split("-").map(Number);
     const nextDate = new Date(year, month - 1 + direction, 1);
     setCurrentMonth(getMonthKey(nextDate));
