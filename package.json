@@ -9,6 +9,9 @@
     "preview": "vite preview",
     "start": "vite"
   },
+  "engines": {
+    "node": "24.1.0"
+  },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
     "@tailwindcss/vite": "^4.2.2",
