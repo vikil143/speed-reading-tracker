@@ -1,4 +1,10 @@
-# React + TypeScript + Vite
+# Speed Reading Tracker
+
+Live site: https://reading-tracker-tawny.vercel.app/
+
+## Development
+
+This project uses React, TypeScript, and Vite.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
