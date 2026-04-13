@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ParagraphWordCounterModal } from "@/components/ParagraphWordCounterModal";
 import { ChevronLeft, ChevronRight, Lock, Plus, Trash2 } from "lucide-react";
 
 const STORAGE_KEY = "speed-reading-tracker-v1";
@@ -242,6 +243,7 @@ export default function SpeedReadingTrackerApp() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <ParagraphWordCounterModal />
               <Button onClick={addSession}>
                 <Plus className="mr-2 h-4 w-4" /> Add Extra Session
               </Button>
