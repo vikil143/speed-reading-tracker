@@ -82,27 +82,33 @@ function isTrackerData(value: unknown): value is TrackerData {
   return Object.values(value).every((monthData) => Array.isArray(monthData));
 }
 
-export default function SpeedReadingTrackerApp() {
-  const [data, setData] = useState<TrackerData>({});
-  const [currentMonth, setCurrentMonth] = useState(getMonthKey());
+function createInitialData(): TrackerData {
+  const monthKey = getMonthKey();
 
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed: unknown = JSON.parse(raw);
-      if (isTrackerData(parsed)) {
-        const monthKey = getMonthKey();
-        if (!parsed[monthKey]) {
-          parsed[monthKey] = createMonthData();
-        }
-        setData({ ...parsed });
-      } else {
-        setData({ [getMonthKey()]: createMonthData() });
-      }
-    } else {
-      setData({ [getMonthKey()]: createMonthData() });
+  if (typeof window === "undefined") {
+    return { [monthKey]: createMonthData() };
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return { [monthKey]: createMonthData() };
     }
-  }, []);
+
+    const parsed: unknown = JSON.parse(raw);
+    if (!isTrackerData(parsed)) {
+      return { [monthKey]: createMonthData() };
+    }
+
+    return parsed[monthKey] ? { ...parsed } : { ...parsed, [monthKey]: createMonthData() };
+  } catch {
+    return { [monthKey]: createMonthData() };
+  }
+}
+
+export default function SpeedReadingTrackerApp() {
+  const [data, setData] = useState<TrackerData>(() => createInitialData());
+  const [currentMonth, setCurrentMonth] = useState(getMonthKey());
 
   useEffect(() => {
     if (Object.keys(data).length) {
@@ -115,9 +121,8 @@ export default function SpeedReadingTrackerApp() {
   }, [data, currentMonth]);
 
   useEffect(() => {
-    if (!data[currentMonth]) {
-      setData((prev) => ({ ...prev, [currentMonth]: createMonthData() }));
-    }
+    if (data[currentMonth]) return;
+    setData((prev) => ({ ...prev, [currentMonth]: createMonthData() }));
   }, [currentMonth, data]);
 
   const updateSession = (id: string, field: SessionField, value: string) => {
