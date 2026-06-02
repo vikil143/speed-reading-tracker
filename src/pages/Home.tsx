@@ -188,25 +188,27 @@ export default function SpeedReadingTrackerApp() {
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Speed Reading Progress Tracker</h1>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Speed Reading Progress Tracker</h1>
             <p className="mt-1 text-sm text-slate-600">
               Add sessions month by month, calculate WPM automatically, and lock finished sessions so they cannot be changed.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" onClick={() => goMonth(-1)}>
-              <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => goMonth(-1)}>
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline ml-1">Previous</span>
             </Button>
-            <div className="rounded-2xl border bg-white px-4 py-2 text-sm font-medium shadow-sm">
+            <div className="flex-1 rounded-2xl border bg-white px-4 py-2 text-center text-sm font-medium shadow-sm sm:flex-none">
               {formatMonthLabel(currentMonth)}
             </div>
-            <Button variant="outline" onClick={() => goMonth(1)}>
-              Next <ChevronRight className="ml-2 h-4 w-4" />
+            <Button variant="outline" size="sm" onClick={() => goMonth(1)}>
+              <span className="hidden sm:inline mr-1">Next</span>
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
           <Card className="rounded-2xl shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Sessions</CardTitle>
@@ -258,7 +260,8 @@ export default function SpeedReadingTrackerApp() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Desktop table */}
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[1100px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b bg-slate-100 text-left">
@@ -338,6 +341,85 @@ export default function SpeedReadingTrackerApp() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile card list */}
+            <div className="flex flex-col gap-4 md:hidden">
+              {monthSessions.map((session, index) => (
+                <div key={session.id} className="rounded-xl border bg-white p-4 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-700">Session {index + 1}</span>
+                    {session.locked && (
+                      <span className="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium text-slate-600">
+                        <Lock className="mr-1 h-3 w-3" /> Locked
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold text-slate-500">Date</label>
+                      <Input
+                        type="date"
+                        value={session.date}
+                        disabled={session.locked}
+                        onChange={(e) => updateSession(session.id, "date", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold text-slate-500">Words</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={session.words}
+                        disabled={session.locked}
+                        onChange={(e) => updateSession(session.id, "words", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold text-slate-500">Seconds</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={session.seconds}
+                        disabled={session.locked}
+                        onChange={(e) => updateSession(session.id, "seconds", e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold text-slate-500">WPM</label>
+                      <div className="rounded-xl border bg-slate-50 px-3 py-2 text-sm font-semibold">
+                        {session.wpm || "-"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-500">Closest Speed Box</label>
+                    <div className="rounded-xl border bg-slate-50 px-3 py-2 text-sm font-semibold">
+                      {session.speedBand ? `${session.speedBand} WPM` : "-"}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-500">Notes</label>
+                    <Textarea
+                      value={session.notes}
+                      disabled={session.locked}
+                      placeholder="Focus, distractions, understanding, etc."
+                      onChange={(e) => updateSession(session.id, "notes", e.target.value)}
+                    />
+                  </div>
+                  {!session.locked && (
+                    <div className="mt-3">
+                      <Button
+                        className="w-full"
+                        disabled={!session.seconds || !session.words}
+                        onClick={() => lockSession(session.id)}
+                      >
+                        <Lock className="mr-2 h-4 w-4" /> Lock Result
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

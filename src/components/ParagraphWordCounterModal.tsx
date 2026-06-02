@@ -43,7 +43,7 @@ export function ParagraphWordCounterModal() {
       {isOpen ? (
         <div className="modal-overlay" onClick={() => setIsOpen(false)}>
           <div
-            className="modal-panel space-y-4"
+            className="modal-panel max-h-[90vh] overflow-y-auto space-y-4"
             onClick={(event) => event.stopPropagation()}
             role="dialog"
             aria-modal="true"
